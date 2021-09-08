@@ -23,8 +23,6 @@ services:
     volumes:
       - prom-data:/prometheus
       - ./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
     environment:
       - CLIENT=${COMPOSE_FILE}
     expose:
@@ -51,8 +49,6 @@ services:
       - /etc/hostname:/etc/nodename:ro
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
-      - /etc/localtime:/etc/localtime:ro
-      - /etc/timezone:/etc/TZ:ro
     expose:
       - 9100/tcp
   grafana:
@@ -64,8 +60,6 @@ services:
       - GF_SERVER_HTTP_PORT=${GRAFANA_PORT}
     volumes:
       - grafana-data:/var/lib/grafana
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
     depends_on:
       - prometheus
     expose:
