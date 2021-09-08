@@ -1,0 +1,7 @@
+version: "3.4"
+services:
+  execution:
+    ports:
+      - 5052:5052/tcp
+  eth:
+    image: tianon/true
