@@ -12,6 +12,8 @@ services:
     stop_grace_period: 1m
     volumes:
       - lhbeacon-data:/var/lib/lighthouse
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     ports:
       - ${LH_PORT}:${LH_PORT}/tcp
       - ${LH_PORT}:${LH_PORT}/udp
@@ -40,8 +42,25 @@ services:
       - --debug-level=${LOG_LEVEL}
   validator:
     restart: "${RESTART}"
-    image: alpine
-    command: "sleep infinity"
+    image: lighthouse:local
+    volumes:
+      - lhvalidator-data:/var/lib/lighthouse
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    entrypoint:
+      - docker-entrypoint.sh
+      - lighthouse
+      - vc
+      - --datadir
+      - /var/lib/lighthouse
+      - --beacon-nodes
+      - ${CC_NODE}
+      - --enable-doppelganger-protection
+      - --graffiti
+      - ${GRAFFITI}
+      - --network
+      - ${NETWORK}
+      - --debug-level=${LOG_LEVEL}
     depends_on:
       - consensus
   validator-import:
@@ -50,6 +69,8 @@ services:
     volumes:
       - lhvalidator-data:/var/lib/lighthouse
       - ${DEPCLI_LOCALDIR}/validator_keys:/validator_keys
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     entrypoint:
       - validator-import.sh
       - lighthouse
@@ -69,6 +90,8 @@ services:
     volumes:
       - lhvalidator-data:/var/lib/lighthouse
       - ${DEPCLI_LOCALDIR}/validator_keys:/validator_keys
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     entrypoint:
       - validator-exit.sh
       - lighthouse
@@ -92,6 +115,8 @@ services:
     volumes:
       - lhvalidator-data:/var/lib/lighthouse
       - ${DEPCLI_LOCALDIR}:/interchange
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     entrypoint:
       - lighthouse
       - account
