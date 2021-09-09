@@ -1,0 +1,12 @@
+version: "3.4"
+services:
+  consensus:
+    ports:
+      - 5054/tcp 
+    expose:
+      - 5054/tcp
+    command:
+      - --metrics
+      - --metrics-address
+      - 0.0.0.0
+      - --validator-monitor-auto
