@@ -2,7 +2,7 @@ version: "3.4"
 services:
   consensus:
     ports:
-      - 5054/tcp 
+      - 5054/tcp
     expose:
       - 5054/tcp
     command:
