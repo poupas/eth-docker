@@ -2,9 +2,8 @@ ARG DOCKER_TAG
 
 FROM statusim/nimbus-eth2:${DOCKER_TAG}
 
-# Unused, the next three are here to avoid build time complaints
+# Included here to avoid build-time complaints
 ARG BUILD_TARGET
-ARG METRICS
 
 ARG UID=10002
 
@@ -27,6 +26,6 @@ RUN cp /home/user/nimbus-eth2/build/nimbus_beacon_node /usr/local/bin/nimbus_bea
 # Scripts for privilege change and validator import
 COPY ./validator-import.sh /usr/local/bin/
 
-USER ${USER}
+USER user
 
 ENTRYPOINT ["nimbus_beacon_node"]
