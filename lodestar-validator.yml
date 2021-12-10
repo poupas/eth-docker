@@ -10,98 +10,101 @@ services:
   validator:
     restart: "${RESTART}"
     build:
-      context: ./lighthouse
-      dockerfile: ${LH_DOCKERFILE}
+      context: ./lodestar
+      dockerfile: ${LS_DOCKERFILE}
       args:
-        - BUILD_TARGET=${LH_SRC_BUILD_TARGET}
-        - DOCKER_TAG=${LH_DOCKER_TAG}
-    image: lighthouse:local
-    user: lhvalidator
+        - BUILD_TARGET=${LS_SRC_BUILD_TARGET}
+        - DOCKER_TAG=${LS_DOCKER_TAG}
+    image: lodestar:local
+    user: lsvalidator
     volumes:
-      - lhvalidator-data:/var/lib/lighthouse
+      - lsvalidator-data:/var/lib/lodestar/validators
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     <<: *logging
     entrypoint:
-      - lighthouse
-      - vc
-      - --datadir
-      - /var/lib/lighthouse
-      - --beacon-nodes
+      - node
+      - --max-old-space-size=8192
+      - /usr/app/packages/cli/bin/lodestar
+      - validator
+      - --rootDir
+      - /var/lib/lodestar/validators
+      - --server
       - ${CC_NODE}
-#      - --enable-doppelganger-protection
       - --graffiti
       - ${GRAFFITI}
+      - --logLevel
+      - ${LOG_LEVEL}
       - --network
       - ${NETWORK}
-      - --debug-level=${LOG_LEVEL}
   validator-import:
-    restart: "no"
-    image: lighthouse:local
+    restart: "${RESTART}"
+    image: lodestar:local
     user: root
     volumes:
-      - lhvalidator-data:/var/lib/lighthouse
+      - lsvalidator-data:/var/lib/lodestar/validators
       - ${DEPCLI_LOCALDIR}/validator_keys:/validator_keys
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     entrypoint:
       - validator-import.sh
-      - lighthouse
+      - node
+      - --max-old-space-size=8192
+      - /usr/app/packages/cli/bin/lodestar
       - account
       - validator
       - import
-      - --datadir
-      - /var/lib/lighthouse
+      - --rootDir
+      - /var/lib/lodestar/validators
       - --directory
       - /val_keys
       - --network
       - ${NETWORK}
-      - --debug-level=${LOG_LEVEL}
   validator-exit:
     restart: "no"
-    image: lighthouse:local
-    user: root
+    image: lodestar:local
+    user: lsvalidator
     volumes:
-      - lhvalidator-data:/var/lib/lighthouse
-      - ${DEPCLI_LOCALDIR}/validator_keys:/validator_keys
+      - lsvalidator-data:/var/lib/lodestar/validators
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     entrypoint:
-      - validator-exit.sh
-      - lighthouse
+      - node
+      - --max-old-space-size=8192
+      - /usr/app/packages/cli/bin/lodestar
       - account
       - validator
-      - exit
-      - --beacon-node
+      - voluntary-exit
+      - --rootDir
+      - /var/lib/lodestar/validators
+      - --server
       - ${CC_NODE}
-      - --datadir
-      - /var/lib/lighthouse
+      -  --logLevel
+      - ${LOG_LEVEL}
       - --network
       - ${NETWORK}
-      - --debug-level=${LOG_LEVEL}
-      - --keystore
   validator-account:
     restart: "no"
-    image: lighthouse:local
-    user: lhvalidator
+    image: lodestar:local
+    user: lsvalidator
     volumes:
-      - lhvalidator-data:/var/lib/lighthouse
-      - ${DEPCLI_LOCALDIR}:/interchange
+      - lsvalidator-data:/var/lib/lodestar/validators
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     entrypoint:
-      - lighthouse
+      - node
+      - --max-old-space-size=8192
+      - /usr/app/packages/cli/bin/lodestar
       - account
       - validator
-      - --datadir
-      - /var/lib/lighthouse
+      - --rootDir
+      - /var/lib/lodestar/validators
       - --network
       - ${NETWORK}
-      - --debug-level=${LOG_LEVEL}
   eth:
     image: tianon/true
     restart: "no"
     depends_on:
       - validator
 volumes:
-  lhvalidator-data:
+  lsvalidator-data:

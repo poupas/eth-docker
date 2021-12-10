@@ -3,5 +3,3 @@ services:
   consensus:
     ports:
       - 5052:5052/tcp
-  eth:
-    image: tianon/true
