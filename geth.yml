@@ -15,6 +15,10 @@ services:
     stop_grace_period: 3m
     image: geth:local
     user: geth
+    ulimits:
+      nofile:
+        soft: "65536"
+        hard: "65536"
     volumes:
       - geth-eth1-data:/var/lib/goethereum
       - /etc/timezone:/etc/timezone:ro

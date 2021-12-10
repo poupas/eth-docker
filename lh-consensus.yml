@@ -14,6 +14,10 @@ services:
         - DOCKER_TAG=${LH_DOCKER_TAG}
     image: lighthouse:local
     user: lhconsensus
+    ulimits:
+      nofile:
+        soft: "65536"
+        hard: "65536"
     stop_grace_period: 1m
     volumes:
       - lhconsensus-data:/var/lib/lighthouse
@@ -47,6 +51,7 @@ services:
       - --eth1-blocks-per-log-query
       - "150"
       - --debug-level=${LOG_LEVEL}
+      - --staking
     command: ${LH_RAPID_SYNC}
     labels:
       - traefik.enable=true
