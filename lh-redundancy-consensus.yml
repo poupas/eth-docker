@@ -1,0 +1,7 @@
+version: "3.4"
+services:
+  consensus:
+    command:
+      - --staking
+      - --subscribe-all-subnets
+      - --import-all-attestations

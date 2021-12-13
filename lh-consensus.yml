@@ -53,7 +53,6 @@ services:
       - --eth1-blocks-per-log-query
       - "150"
       - --debug-level=${LOG_LEVEL}
-      - --staking
     command: ${LH_RAPID_SYNC}
     labels:
       - traefik.enable=true
