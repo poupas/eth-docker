@@ -17,9 +17,10 @@ services:
         - DOCKER_TAG=${LH_DOCKER_TAG}
     image: lighthouse:local
     user: lhvalidator
+    expose:
+      - 5064/tcp
     volumes:
       - lhvalidator-data:/var/lib/lighthouse
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     <<: *logging
     entrypoint:
@@ -34,6 +35,9 @@ services:
       - --network
       - ${NETWORK}
       - --debug-level=${LOG_LEVEL}
+      - --metrics
+      - --metrics-address
+      - 0.0.0.0
   validator-import:
     restart: "no"
     image: lighthouse:local
@@ -41,7 +45,6 @@ services:
     volumes:
       - lhvalidator-data:/var/lib/lighthouse
       - ${DEPCLI_LOCALDIR}/validator_keys:/validator_keys
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     entrypoint:
       - validator-import.sh
@@ -63,7 +66,6 @@ services:
     volumes:
       - lhvalidator-data:/var/lib/lighthouse
       - ${DEPCLI_LOCALDIR}/validator_keys:/validator_keys
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     entrypoint:
       - validator-exit.sh
@@ -86,7 +88,6 @@ services:
     volumes:
       - lhvalidator-data:/var/lib/lighthouse
       - ${DEPCLI_LOCALDIR}:/interchange
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     entrypoint:
       - lighthouse

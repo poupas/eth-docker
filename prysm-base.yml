@@ -24,14 +24,14 @@ services:
     stop_grace_period: 1m
     volumes:
       - prysmbeacon-data:/var/lib/prysm
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     ports:
       - ${PRYSM_PORT}:${PRYSM_PORT}/tcp
       - ${PRYSM_UDP_PORT}:${PRYSM_UDP_PORT}/udp
     expose:
-      - 5052
-      - 4000
+      - 5052/tcp
+      - 4000/tcp
+      - 8080/tcp
     networks:
       default:
         aliases:
@@ -66,6 +66,8 @@ services:
       - ${LOG_LEVEL}
       - --${NETWORK}
       - --accept-terms-of-use
+      - --monitoring-host
+      - 0.0.0.0
   validator:
     restart: "${RESTART}"
     build:
@@ -73,9 +75,10 @@ services:
       <<: *prysm-build
     image: prysm-validator:local
     user: prysmvalidator
+    expose:
+      - 8081/tcp
     volumes:
       - prysmvalidator-data:/var/lib/prysm
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     <<: *logging
     entrypoint:
@@ -95,6 +98,8 @@ services:
       # If you chose not to store the wallet password during import, comment out the two following lines
       - --wallet-password-file
       - /var/lib/prysm/password.txt
+      - --monitoring-host
+      - 0.0.0.0
     depends_on:
       - consensus
   validator-account-list:
@@ -103,7 +108,6 @@ services:
     image: prysm-validator:local
     volumes:
       - prysmvalidator-data:/var/lib/prysm
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     entrypoint:
       - validator
@@ -124,7 +128,6 @@ services:
     volumes:
       - prysmvalidator-data:/var/lib/prysm
       - ${DEPCLI_LOCALDIR}/validator_keys:/validator_keys
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     entrypoint: validator-import.sh
     command:
@@ -144,7 +147,6 @@ services:
     image: prysm-validator:local
     volumes:
       - prysmvalidator-data:/var/lib/prysm
-      - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     entrypoint:
       - validator
