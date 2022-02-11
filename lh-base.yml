@@ -22,8 +22,8 @@ services:
       - lhbeacon-data:/var/lib/lighthouse
       - /etc/localtime:/etc/localtime:ro
     ports:
-      - ${CC_P2P_PORT}:${CC_P2P_PORT}/tcp
-      - ${CC_P2P_PORT}:${CC_P2P_PORT}/udp
+      - ${CC_P2P_PORT:-9000}:${CC_P2P_PORT:-9000}/tcp
+      - ${CC_P2P_PORT:-9000}:${CC_P2P_PORT:-9000}/udp
     expose:
       - 5052/tcp
       - 5054/tcp
@@ -46,7 +46,7 @@ services:
       - --network
       - ${NETWORK}
       - --port
-      - ${CC_P2P_PORT}
+      - ${CC_P2P_PORT:-9000}
       - --target-peers
       - ${LH_PEER_COUNT}
       - --eth1-endpoints
@@ -84,8 +84,29 @@ services:
       - --metrics
       - --metrics-address
       - 0.0.0.0
+      - --http
+      - --http-port
+      - ${KEY_API_PORT:-7500}
+      - --http-address
+      - 0.0.0.0
+      - --http-allow-origin
+      - "*"
+      - --unencrypted-http-transport
     depends_on:
       - consensus
+  get-keyapi-token:
+    restart: "no"
+    image: alpine:latest
+    user: "10000"
+    volumes:
+      - lhvalidator-data:/var/lib/lighthouse
+      - /etc/localtime:/etc/localtime:ro
+    <<: *logging
+    entrypoint: ["/bin/sh","-c"]
+    command:
+      - |
+        cat /var/lib/lighthouse/validators/api-token.txt
+        echo
   validator-import:
     restart: "no"
     image: lighthouse:local

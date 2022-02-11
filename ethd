@@ -55,7 +55,11 @@ update() {
     else
         git pull
     fi
-    envmigrate
+# BASH_SOURCE so newer code gets to do the migration, env so I have a way to
+# communicate with it
+    export KEEPTARGETS=$__keeptargets
+    "${BASH_SOURCE}" envmigrate
+    unset KEEPTARGETS
     cmd build --pull
     exec 3>&1
     exec 4>&2
@@ -132,6 +136,25 @@ rocketeer() {
 }
 
 prune-geth() {
+
+    __non_interactive=0
+    while :
+    do
+        if [ -z ${1+x} ]; then
+            break
+        fi
+        case "$1" in
+            --non-interactive)
+                __non_interactive=1
+                shift
+                ;;
+            *)
+                echo "Error: Unknown option: $1" >&2
+                exit 1
+                ;;
+        esac
+    done
+
     if [ ! -f "./${ENV_FILE}" ]; then
         echo "${ENV_FILE} configuration file not found, aborting."
         exit 1
@@ -190,30 +213,30 @@ prune-geth() {
         fi
     fi
 
-    while true; do
-        read -rp "WARNING - this will stop Geth and prune its database. Do you wish to continue? (No/Yes) " yn
-        case $yn in
-            [Yy]es ) break;;
-            * ) echo "Aborting, no changes made"; exit 1;;
-        esac
-    done
+    if [ __non_interactive = 0 ]; then
+      while true; do
+          read -rp "WARNING - this will stop Geth and prune its database. Do you wish to continue? (No/Yes) " yn
+          case $yn in
+              [Yy]es ) break;;
+              * ) echo "Aborting, no changes made"; exit 1;;
+          esac
+      done
+    fi
 
     echo ""
-    echo "Stopping Geth"
+    echo "Starting Geth prune"
     echo ""
+    cmd run --rm set-prune-marker "touch /var/lib/goethereum/prune-marker"
     cmd stop execution && cmd rm -f execution
+    start
     echo ""
-    echo "Starting prune"
-    echo ""
-    cmd run --rm --name geth_prune -d execution snapshot prune-state
-    echo ""
-    echo "Prune is running, you can observe it with 'sudo docker logs -f --tail 500 geth_prune'"
+    echo "Prune is running, you can observe it with 'sudo ./ethd logs -f execution'"
     echo ""
     echo "There should be three stages: \"Iterating state snapshot\", \"Pruning state data\", and \"Compacting database\". During \
 the \"Compacting database\" stage it may not output logs for an hour or so, that is normal."
     echo ""
-    echo "When prune is done, which takes 4-5 hours, start Geth again with 'sudo ./ethd start'."
-    echo "NB: 'sudo' can be left off these commands if your user is part of the 'docker' group."
+    echo "When prune is done, which takes 4-5 hours, Geth will automatically start again."
+    echo "NB: 'sudo' can be left off the './ethd logs' command if your user is part of the 'docker' group."
     echo ""
 }
 
@@ -346,7 +369,7 @@ envmigrate() {
             CF_EMAIL CF_API_TOKEN AWS_PROFILE AWS_HOSTED_ZONE_ID GRAFANA_HOST PRYSM_HOST \
             EC_HOST EC_WS_HOST CC_HOST DDNS_SUBDOMAIN DDNS_PROXY TEKU_RAPID_SYNC LH_RAPID_SYNC LS_RAPID_SYNC  \
 	        NIMBUS_RAPID_SYNC CC_NODE BEACON_STATS_API BEACON_STATS_MACHINE EC_P2P_PORT CC_P2P_PORT PRYSM_PORT  \
-	        PRYSM_UDP_PORT GRAFANA_PORT PRYSM_WEB_PORT TRAEFIK_WEB_PORT TRAEFIK_WEB_HTTP_PORT \
+	        PRYSM_UDP_PORT GRAFANA_PORT KEY_API_PORT TRAEFIK_WEB_PORT TRAEFIK_WEB_HTTP_PORT \
 	        EC_RPC_PORT EC_WS_PORT RESTART LOG_LEVEL GETH_CACHE SSV_P2P_PORT SSV_P2P_PORT_UDP )
     TARGET_VARS=( NIM_SRC_BUILD_TARGET NIM_DOCKER_TAG NIM_DOCKERFILE TEKU_SRC_BUILD_TARGET TEKU_DOCKER_TAG \
                 TEKU_DOCKERFILE LH_SRC_BUILD_TARGET LH_DOCKER_TAG LH_DOCKERFILE PRYSM_SRC_BUILD_TARGET \
@@ -355,8 +378,22 @@ envmigrate() {
                 GETH_DOCKERFILE NM_SRC_BUILD_TARGET NM_DOCKER_TAG NM_DOCKERFILE BESU_SRC_BUILD_TARGET \
                 BESU_DOCKER_TAG BESU_DOCKERFILE SSV_NODE_TAG DEPCLI_SRC_BUILD_TARGET DEPCLI_DOCKER_TAG DEPCLI_LOCALDIR \
                 NODE_EXPORTER_IGNORE_MOUNT_REGEX )
-    OLD_VARS=( LH_PORT )
-    NEW_VARS=( CC_P2P_PORT )
+    OLD_VARS=( LH_PORT PRYSM_WEB_PORT )
+    NEW_VARS=( CC_P2P_PORT KEY_API_PORT )
+
+    # I had a "${BASH_SOURCE} envmigrate $@" so that new code would do the migration,
+    # then dropped that way of doing things with the parameter and used an ENV
+    # variable instead. This checks for that old->new behavior and looks for the parameter
+    if [ -z "${KEEPTARGETS-}" ]; then
+        __keeptargets=0
+        for var in "$@"; do
+            if [ "$var" = "--keep-targets" ]; then
+                __keeptargets=1
+            fi
+        done
+    else
+        __keeptargets=${KEEPTARGETS}
+    fi
 
     if [ "${EUID}" -eq 0 ]; then
       # Previous version of this tool when run as root may have created a root-owned .env.bak
@@ -656,7 +693,7 @@ query_rapid_sync() {
     # Assume no to start
     TEKU_RAPID_SYNC=""
     LH_RAPID_SYNC=""
-    LS_RAPID_SYNC="false"
+    LS_RAPID_SYNC=""
     NIMBUS_RAPID_SYNC=""
     PRYSM_RAPID_SYNC=""
 
@@ -680,8 +717,9 @@ query_rapid_sync() {
     #        fi
             ;;
         "lodestar-base.yml" | "lodestar-consensus.yml")
-            if (whiptail --title "Select Option" --yesno "Do you want to use Lodestar rapid sync with remote checkpoint?" 10 60) then
-                LS_RAPID_SYNC="true"
+            if (whiptail --title "Select Option" --yesno "Do you want to use Lodestar rapid sync with remote checkpoint, e.g. Infura?" 10 60) then
+		query_remote_beacon
+                LS_RAPID_SYNC="--weakSubjectivitySyncLatest=true --weakSubjectivityServerUrl=${REMOTE_BEACON}"
             fi
             ;;
         "prysm-base.yml" | "prysm-consensus.yml")
@@ -818,11 +856,14 @@ config () {
     set_value_in_env
 
     if [[ "${EUID}" -eq 0 || -n $(id -nG $(id -u) | grep -w "docker") ]]; then
-        cmd build
-    fi
-
-    if [ ${__deployment} = "rocket" ]; then
-        update
+        cmd build --pull
+        exec 3>&1
+        exec 4>&2
+        exec 1> /dev/null
+        exec 2> /dev/null
+        cmd pull || true
+        exec 1>&3
+        exec 2>&4
     fi
 }
 

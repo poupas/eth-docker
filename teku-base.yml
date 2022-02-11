@@ -26,21 +26,22 @@ services:
     expose:
       - 8008/tcp
     ports:
-      - ${CC_P2P_PORT}:${CC_P2P_PORT}/tcp
-      - ${CC_P2P_PORT}:${CC_P2P_PORT}/udp
+      - ${CC_P2P_PORT:-9000}:${CC_P2P_PORT:-9000}/tcp
+      - ${CC_P2P_PORT:-9000}:${CC_P2P_PORT:-9000}/udp
     networks:
       default:
         aliases:
           - eth2
     <<: *logging
     entrypoint:
+      - docker-entrypoint.sh
       - /opt/teku/bin/teku
       - --data-path=/var/lib/teku
       - --log-destination=CONSOLE
       - --network=${NETWORK}
       - --eth1-endpoints=${EC_NODE}
       - --eth1-deposit-contract-max-request-size=150
-      - --p2p-port=${CC_P2P_PORT}
+      - --p2p-port=${CC_P2P_PORT:-9000}
       - --p2p-peer-upper-bound=${TEKU_PEER_COUNT}
       - --validators-keystore-locking-enabled=true
       - --validator-keys=/var/lib/teku/validator-keys:/var/lib/teku/validator-passwords
@@ -54,7 +55,26 @@ services:
       - --metrics-port=8008
       - --metrics-interface=0.0.0.0
       - --metrics-host-allowlist=*
+      - --validator-api-enabled=true
+      - --validator-api-port=${KEY_API_PORT:-7500}
+      - --validator-api-host-allowlist=*
+      - --validator-api-cors-origins=*
+      - --validator-api-keystore-file=/var/lib/teku/teku-keyapi.keystore
+      - --validator-api-keystore-password-file=/var/lib/teku/teku-keyapi.password
     command: ${TEKU_RAPID_SYNC}
+  get-keyapi-token:
+    restart: "no"
+    image: alpine:latest
+    user: "10002"
+    volumes:
+      - teku-data:/var/lib/teku
+      - /etc/localtime:/etc/localtime:ro
+    <<: *logging
+    entrypoint: ["/bin/sh","-c"]
+    command:
+      - |
+        cat var/lib/teku/validator/key-manager/validator-api-bearer
+        echo
   validator-import:
     restart: "no"
     image: teku:local

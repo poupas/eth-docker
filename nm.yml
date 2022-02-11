@@ -52,7 +52,6 @@ services:
       - ${EC_RPC_PORT}
       - --JsonRpc.WebSocketsPort
       - ${EC_WS_PORT}
-      - --NoCategory.CorsOrigins=*
       - --Sync.FastSync
       - "true"
       - --config
@@ -65,7 +64,7 @@ services:
       - "1"
       - --Sync.AncientReceiptsBarrier
       - "1"
-      - --NoCategory.LogLevel
+      - --log
       - ${LOG_LEVEL}
   eth:
     depends_on:
