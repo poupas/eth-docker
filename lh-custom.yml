@@ -2,6 +2,7 @@ version: "3.4"
 services:
   consensus:
     command:
+      - ${LH_RAPID_SYNC}
       - --staking
       - --subscribe-all-subnets
       - --import-all-attestations
