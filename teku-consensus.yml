@@ -18,7 +18,7 @@ services:
     volumes:
       - tekuconsensus-data:/var/lib/teku
     environment:
-      - JAVA_OPTS=-XX:SoftMaxHeapSize=4g -Xmx8g
+      - JAVA_OPTS=-Xmx8g
     expose:
       - 8008/tcp
     ports:
