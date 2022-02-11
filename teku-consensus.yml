@@ -17,9 +17,8 @@ services:
     stop_grace_period: 1m
     volumes:
       - tekuconsensus-data:/var/lib/teku
-      - /etc/localtime:/etc/localtime:ro
     environment:
-      - JAVA_OPTS=-XX:SoftMaxHeapSize=2g -Xmx4g
+      - JAVA_OPTS=-XX:SoftMaxHeapSize=4g -Xmx8g
     expose:
       - 8008/tcp
     ports:
