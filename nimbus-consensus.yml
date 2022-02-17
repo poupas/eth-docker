@@ -1,10 +1,7 @@
 version: "3.4"
 x-logging: &logging
   logging:
-    driver: json-file
-    options:
-      max-size: 10m
-      max-file: "3"
+    driver: journald
 
 services:
   consensus:
@@ -20,6 +17,9 @@ services:
     stop_grace_period: 1m
     volumes:
       - nimbus-consensus-data:/var/lib/nimbus
+    environment:
+      - NIMBUS_RAPID_SYNC=${NIMBUS_RAPID_SYNC:-}
+      - NETWORK=${NETWORK}
     expose:
       - 8008/tcp
     ports:
@@ -31,6 +31,7 @@ services:
           - eth2
     <<: *logging
     entrypoint:
+      - docker-entrypoint.sh
       - /usr/local/bin/nimbus_beacon_node
       - --data-dir=/var/lib/nimbus
       - --non-interactive
