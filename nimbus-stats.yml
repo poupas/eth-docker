@@ -1,0 +1,11 @@
+# Send client stats to beaconcha.in service
+version: "3.4"
+services:
+  beaconchain-exporter:
+    image: gobitfly/eth2-client-metrics-exporter
+    restart: unless-stopped
+    command:
+      - --server.address=https://beaconcha.in/api/v1/client/metrics?apikey=${BEACON_STATS_API}&machine=${BEACON_STATS_MACHINE}
+      - --beaconnode.type=nimbus
+      - --beaconnode.address=http://localhost:8008/metrics
+    network_mode: service:consensus
