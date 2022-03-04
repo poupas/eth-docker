@@ -6,3 +6,6 @@ services:
       - --staking
       - --subscribe-all-subnets
       - --import-all-attestations
+      - --logfile-max-number=0
+      - --enr-udp-port=${CC_P2P_PORT:-9000}
+      - --network-load=5
