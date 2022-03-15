@@ -1,6 +1,10 @@
 version: "3.4"
 services:
   consensus:
+    ulimits:
+      nofile:
+        soft: "65536"
+        hard: "65536"
     command:
       - ${TEKU_RAPID_SYNC}
       - --p2p-subscribe-all-subnets-enabled=true

@@ -1,5 +1,9 @@
 version: "3.4"
 services:
   consensus:
+    ulimits:
+      nofile:
+        soft: "65536"
+        hard: "65536"
     command:
       - --subscribe-all-subnets

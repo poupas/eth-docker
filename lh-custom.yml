@@ -1,6 +1,10 @@
 version: "3.4"
 services:
   consensus:
+    ulimits:
+      nofile:
+        soft: "65536"
+        hard: "65536"
     command:
       - ${LH_RAPID_SYNC}
       - --staking
@@ -8,4 +12,4 @@ services:
       - --import-all-attestations
       - --logfile-max-number=0
       - --enr-udp-port=${CC_P2P_PORT:-9000}
-      - --network-load=5
+      - --network-load=4
