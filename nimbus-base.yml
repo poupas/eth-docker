@@ -23,7 +23,7 @@ services:
       - nimbus-data:/var/lib/nimbus
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - NIMBUS_RAPID_SYNC=${NIMBUS_RAPID_SYNC:-}
+      - RAPID_SYNC_URL=${RAPID_SYNC_URL:-}
       - NETWORK=${NETWORK}
     expose:
       - 8008/tcp
@@ -54,7 +54,6 @@ services:
       - --rest
       - --rest-address=0.0.0.0
       - --rest-port=5052
-      - --num-threads=0
       - --enr-auto-update=true
       - --doppelganger-detection=false
       - --metrics

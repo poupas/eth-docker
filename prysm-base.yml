@@ -26,6 +26,8 @@ services:
     volumes:
       - prysmbeacon-data:/var/lib/prysm
       - /etc/localtime:/etc/localtime:ro
+    environment:
+      - RAPID_SYNC_URL=${RAPID_SYNC_URL:-}
     ports:
       - ${PRYSM_PORT}:${PRYSM_PORT}/tcp
       - ${PRYSM_UDP_PORT}:${PRYSM_UDP_PORT}/udp
@@ -69,6 +71,8 @@ services:
       - --accept-terms-of-use
       - --monitoring-host
       - 0.0.0.0
+      - --monitoring-port
+      - "8008"
   validator:
     restart: "${RESTART}"
     build:
@@ -101,6 +105,8 @@ services:
       - /var/lib/prysm/password.txt
       - --monitoring-host
       - 0.0.0.0
+      - --monitoring-port
+      - "8009"
       - --web
       - --grpc-gateway-host
       - 0.0.0.0
